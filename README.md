@@ -1,5 +1,10 @@
 # Claude Buttons
 
+[![CI](https://github.com/pierrosimonestd-cpu/claude-buttons/actions/workflows/ci.yml/badge.svg)](https://github.com/pierrosimonestd-cpu/claude-buttons/actions/workflows/ci.yml)
+![Windows](https://img.shields.io/badge/platform-Windows-0078D6)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **A button bar for the Claude desktop app, filled by Claude itself.**
 
 Ask Claude Code to *"make me a button that pulls all my repos"* and a button appears on a small bar docked to the edge of the Claude window. One click runs the script: no prompt, no tokens, no waiting.
@@ -53,6 +58,17 @@ Claude writes the script, can run it once to test it, and the button appears on 
 
 Scripts run without a console window and without interactive input, so parameters go in the script itself.
 
+### Ideas
+
+Things that make good buttons: anything you do more than twice a week and could describe in one sentence.
+
+- *"Pull every git repo under C:\code and tell me which ones had changes"*
+- *"Start my dev stack: docker compose up in my-app, then npm run dev"*
+- *"Zip my Documents folder into D:\Backups with today's date"*
+- *"Toggle what closing the laptop lid does between sleep and nothing"*
+- *"Empty the Recycle Bin and delete temp files older than a week"*
+- *"Open the three sites I check every morning"*
+
 ### MCP tools
 
 | Tool | What it does |
@@ -95,21 +111,35 @@ powershell -ExecutionPolicy Bypass -File uninstall.ps1 -RemoveData   # deletes t
 
 ## How it works
 
-| File | Role |
-|---|---|
-| `registry.py` | Data format, validation and script execution (the only module that touches `~/.claude-buttons`) |
-| `mcp_server.py` | MCP tools for Claude |
-| `bar.pyw` | The bar (tkinter) |
-| `dock.py` | Win32 helpers: finds the Claude window, docks as an owned window, DPI, hotkey, theme |
+```
+claude-buttons/
+├── bar.pyw                 # starts the bar (pythonw, no console)
+├── mcp_server.py           # starts the MCP server (registered with `claude mcp add`)
+├── claude_buttons/
+│   ├── registry.py         # data format, validation, script execution
+│   ├── server.py           # MCP tools for Claude
+│   ├── bar.py              # the bar UI (tkinter)
+│   └── dock.py             # Win32: finds the Claude window, docking, DPI, hotkey, theme
+├── tests/
+├── install.ps1
+└── uninstall.ps1
+```
+
+`registry.py` is the only module that touches `~/.claude-buttons`; the bar and the MCP server both go through it, and the bar picks up changes by watching the files.
 
 The bar is an *owned window* of the Claude window: Windows keeps it just above Claude in the z-order and hides it with Claude, so it never floats over other apps.
+
+Script output goes to a file rather than a pipe, so a button that launches a long-running program (a dev server, a tunnel) finishes as soon as its script does.
 
 ## Development
 
 ```powershell
-python -m pip install -r requirements.txt pytest
-python -m pytest -q
+python -m pip install -r requirements.txt pytest ruff
+python -m pytest
+python -m ruff check . ; python -m ruff format --check .
 ```
+
+Issues and pull requests are welcome. See the [changelog](CHANGELOG.md) for what changed.
 
 ## License
 

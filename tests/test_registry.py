@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-import registry
+from claude_buttons import registry
 
 
 @pytest.fixture(autouse=True)
@@ -28,13 +28,16 @@ def test_accented_name_slug():
     assert registry.add("Città è però", "python", "pass")["id"] == "citta-e-pero"
 
 
-@pytest.mark.parametrize("kwargs", [
-    dict(name="", language="python", script="pass"),
-    dict(name="x", language="ruby", script="pass"),
-    dict(name="x", language="python", script="  "),
-    dict(name="x", language="python", script="pass", color="red"),
-    dict(name="x", language="python", script="pass", cwd="Z:/does/not/exist"),
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        dict(name="", language="python", script="pass"),
+        dict(name="x", language="ruby", script="pass"),
+        dict(name="x", language="python", script="  "),
+        dict(name="x", language="python", script="pass", color="red"),
+        dict(name="x", language="python", script="pass", cwd="Z:/does/not/exist"),
+    ],
+)
 def test_validation(kwargs):
     with pytest.raises(registry.RegistryError):
         registry.add(**kwargs)
@@ -67,11 +70,14 @@ def test_remove(tmp_home):
         registry.remove("x")
 
 
-@pytest.mark.parametrize("language,script", [
-    ("python", "print('perché ok')"),
-    ("powershell", "Write-Output 'perché ok'"),
-    ("batch", "@echo off\necho ok"),
-])
+@pytest.mark.parametrize(
+    "language,script",
+    [
+        ("python", "print('perché ok')"),
+        ("powershell", "Write-Output 'perché ok'"),
+        ("batch", "@echo off\necho ok"),
+    ],
+)
 def test_run_each_language(language, script):
     registry.add("R", language, script)
     code, out = registry.run("r", timeout=60)
@@ -104,10 +110,13 @@ def test_run_timeout():
 
 def test_background_child_does_not_block():
     # a script that launches a long-lived program must return as soon as it exits
-    registry.add("Launcher", "python",
-                 "import subprocess, sys\n"
-                 "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(6)'])\n"
-                 "print('launched')")
+    registry.add(
+        "Launcher",
+        "python",
+        "import subprocess, sys\n"
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(6)'])\n"
+        "print('launched')",
+    )
     start = time.monotonic()
     code, out = registry.run("launcher", timeout=30)
     assert code == 0 and "launched" in out

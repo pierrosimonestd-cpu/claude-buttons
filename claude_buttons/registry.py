@@ -5,6 +5,7 @@ Layout (default ~/.claude-buttons, override with CLAUDE_BUTTONS_HOME):
     scripts/       the scripts buttons run
     logs/          output of each button's last run
 """
+
 from __future__ import annotations
 
 import json
@@ -35,6 +36,7 @@ class RegistryError(ValueError):
 
 # --- paths --------------------------------------------------------------------
 
+
 def home() -> Path:
     base = os.environ.get("CLAUDE_BUTTONS_HOME")
     path = Path(base) if base else Path.home() / ".claude-buttons"
@@ -56,6 +58,7 @@ def log_path(button_id: str) -> Path:
 
 
 # --- read / write ---------------------------------------------------------------
+
 
 def load() -> list[dict]:
     path = buttons_file()
@@ -100,6 +103,7 @@ def get(button_id: str) -> dict:
 
 # --- validation -----------------------------------------------------------------
 
+
 def _slugify(name: str) -> str:
     text = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
     slug = re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
@@ -135,8 +139,15 @@ def _check_cwd(cwd: str | None) -> None:
 
 # --- operations -----------------------------------------------------------------
 
-def add(name: str, language: str, script: str, description: str = "",
-        cwd: str | None = None, color: str = DEFAULT_COLOR) -> dict:
+
+def add(
+    name: str,
+    language: str,
+    script: str,
+    description: str = "",
+    cwd: str | None = None,
+    color: str = DEFAULT_COLOR,
+) -> dict:
     name = _check_name(name)
     _check_script(script)
     _check_language(language)
@@ -166,9 +177,15 @@ def add(name: str, language: str, script: str, description: str = "",
     return button
 
 
-def update(button_id: str, name: str | None = None, description: str | None = None,
-           language: str | None = None, script: str | None = None,
-           cwd: str | None = None, color: str | None = None) -> dict:
+def update(
+    button_id: str,
+    name: str | None = None,
+    description: str | None = None,
+    language: str | None = None,
+    script: str | None = None,
+    cwd: str | None = None,
+    color: str | None = None,
+) -> dict:
     buttons = load()
     for button in buttons:
         if button["id"] == button_id:
@@ -229,6 +246,7 @@ def read_script(button_id: str) -> str:
 
 # --- execution ------------------------------------------------------------------
 
+
 def _python_exe() -> str:
     exe = Path(sys.executable)
     # under pythonw.exe (the bar) use the python.exe next to it
@@ -260,9 +278,12 @@ def _decode(data: bytes) -> str:
 
 def _kill_tree(proc: subprocess.Popen) -> None:
     if sys.platform == "win32":
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
     else:
         proc.kill()
     proc.wait()
@@ -279,8 +300,13 @@ def run(button_id: str, timeout: float | None = None) -> tuple[int, str]:
     with tempfile.TemporaryFile() as out:
         try:
             proc = subprocess.Popen(
-                command_for(button), cwd=button.get("cwd") or None, env=env,
-                stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, creationflags=flags,
+                command_for(button),
+                cwd=button.get("cwd") or None,
+                env=env,
+                stdout=out,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                creationflags=flags,
             )
             try:
                 code, suffix = proc.wait(timeout=timeout), ""

@@ -1,4 +1,5 @@
 """Win32 helpers to dock a window to the Claude desktop window."""
+
 from __future__ import annotations
 
 import ctypes
@@ -6,7 +7,7 @@ import ctypes.wintypes as wt
 import json
 import os
 import threading
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -35,6 +36,7 @@ _exe_cache: dict[int, str] = {}
 
 # --- process / instance -----------------------------------------------------------
 
+
 def set_dpi_aware() -> None:
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)  # per-monitor
@@ -57,6 +59,7 @@ def is_running() -> bool:
 
 # --- finding the target window ------------------------------------------------------
 
+
 def _exe_of(hwnd: int) -> str:
     pid = wt.DWORD()
     user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
@@ -77,8 +80,13 @@ def _exe_of(hwnd: int) -> str:
 
 
 def _is_target(hwnd: int, targets: Iterable[str]) -> bool:
-    if not (hwnd and user32.IsWindowVisible(hwnd) and not user32.GetWindow(hwnd, _GW_OWNER)
-            and user32.GetWindowTextLengthW(hwnd) > 0 and _exe_of(hwnd) in targets):
+    if not (
+        hwnd
+        and user32.IsWindowVisible(hwnd)
+        and not user32.GetWindow(hwnd, _GW_OWNER)
+        and user32.GetWindowTextLengthW(hwnd) > 0
+        and _exe_of(hwnd) in targets
+    ):
         return False
     if is_minimized(hwnd):
         return True
@@ -109,11 +117,16 @@ def find_target_window(targets: Iterable[str] = DEFAULT_TARGETS, previous: int |
 
 # --- geometry -------------------------------------------------------------------------
 
+
 def window_rect(hwnd: int) -> tuple[int, int, int, int]:
     """Visible bounds (without the invisible resize borders of Windows 10/11)."""
     rect = wt.RECT()
-    if dwmapi.DwmGetWindowAttribute(wt.HWND(hwnd), _DWMWA_EXTENDED_FRAME_BOUNDS,
-                                    ctypes.byref(rect), ctypes.sizeof(rect)) != 0:
+    if (
+        dwmapi.DwmGetWindowAttribute(
+            wt.HWND(hwnd), _DWMWA_EXTENDED_FRAME_BOUNDS, ctypes.byref(rect), ctypes.sizeof(rect)
+        )
+        != 0
+    ):
         user32.GetWindowRect(hwnd, ctypes.byref(rect))
     return rect.left, rect.top, rect.right, rect.bottom
 
@@ -130,6 +143,7 @@ def dpi_scale(hwnd: int) -> float:
 
 
 # --- our own windows ------------------------------------------------------------------
+
 
 def toplevel_hwnd(tk_widget) -> int:
     return int(tk_widget.wm_frame(), 16)
@@ -148,12 +162,14 @@ def bring_above(hwnd: int) -> None:
 
 def round_corners(hwnd: int) -> None:
     pref = ctypes.c_int(2)  # DWMWCP_ROUND (Windows 11; ignored elsewhere)
-    dwmapi.DwmSetWindowAttribute(wt.HWND(hwnd), _DWMWA_WINDOW_CORNER_PREFERENCE,
-                                 ctypes.byref(pref), ctypes.sizeof(pref))
+    dwmapi.DwmSetWindowAttribute(
+        wt.HWND(hwnd), _DWMWA_WINDOW_CORNER_PREFERENCE, ctypes.byref(pref), ctypes.sizeof(pref)
+    )
 
 
 def start_hotkey(key: str, callback: Callable[[], None]) -> None:
     """Register Ctrl+Alt+<key> on a thread with its own message loop."""
+
     def loop():
         if not user32.RegisterHotKey(None, 1, _MOD_CONTROL | _MOD_ALT | _MOD_NOREPEAT, ord(key)):
             return  # already taken by another app
@@ -166,6 +182,7 @@ def start_hotkey(key: str, callback: Callable[[], None]) -> None:
 
 
 # --- theme ----------------------------------------------------------------------------
+
 
 def _claude_configs() -> list[str]:
     appdata = os.environ.get("APPDATA", "")
@@ -199,9 +216,11 @@ def theme_signature() -> tuple:
 
 def windows_light_theme() -> bool:
     import winreg
+
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                            r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as k:
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+        ) as k:
             return winreg.QueryValueEx(k, "AppsUseLightTheme")[0] == 1
     except OSError:
         return False

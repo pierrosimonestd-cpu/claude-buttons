@@ -2,8 +2,7 @@ import sys
 
 import pytest
 
-import dock
-import mcp_server
+from claude_buttons import server as mcp_server
 
 
 @pytest.fixture(autouse=True)
@@ -30,5 +29,7 @@ def test_tool_errors_are_messages_not_exceptions():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Win32 only")
 def test_dock_ignores_unknown_targets():
+    from claude_buttons import dock
+
     assert dock.find_target_window(["no-such-app.exe"]) is None
     assert isinstance(dock.claude_theme_light(), bool)
